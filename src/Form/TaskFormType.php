@@ -81,8 +81,7 @@ class TaskFormType extends AbstractType
     {
         $task = $event->getData();
         $form = $event->getForm();
-       // dd($form->isSubmitted() && $form->isValid());
-        if ($form->isValid() ) {
+        if ($form->isValid()) {
             if ($form->getConfig()->getOptions()['edit']) {
                 $task->setUpdatedOn( New \DateTime());
             }

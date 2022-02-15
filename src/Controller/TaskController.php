@@ -73,15 +73,17 @@ class TaskController extends AbstractController
     public function create(Request $request, FormErrorsSerializer $formErrorsSerializer)
     {
         try {
-            $data = json_decode($request->getContent(), true);
             $task = new Task();
-            //traitememt formulaire creation de tache et enregistrement en base de donnée
+
+            //traitememt formulaire creation de tâches et enregistrement en base de donnée
             $taskForm = $this->createForm(TaskFormType::class, $task);
 
-            if ($taskForm->submit($data, true)->isValid()) {
+            //submit du formulaire et retour de la réponse si le fomrulaire est valide
+            if ($taskForm->submit($request->query->all(), true)->isValid()) {
                 return $this->jsonCreatedResponse($task);
             }
 
+            // INVALID_FORM_EXCEPTION si le formulaire est invalide
             throw new InvalidFormException(
                 'INVALID_FORM',
                 0,
@@ -104,6 +106,11 @@ class TaskController extends AbstractController
       *     response=500,
       *     description="no task has been created (invalid values, ... )",
       * )
+      *
+      * @OA\Response(
+      *     response=404,
+      *     description="Task was not found",
+      * )
       * @OA\Parameter(
       *     name="form",
       *     in="query",
@@ -119,14 +126,17 @@ class TaskController extends AbstractController
         if (null === $task) {
             throw new NotFoundHttpException('TASK_NOT_FOUND');
         }
-        $data = json_decode($request->getContent(), true);
+
         try {
-            //traitememt formulaire creation de tache et enregistrement en base de donnée
+            //traitememt formulaire creation de tâches et enregistrement en base de donnée
             $taskForm= $this->createForm(TaskFormType::class, $task, ['edit' => true]);
-            if ($taskForm->submit($data, true)->isValid()) {
+
+            //submit du formulaire et retour de la réponse si le fomrulaire est valide
+            if ($taskForm->submit($request->query->all(), true)->isValid()) {
                 return $this->jsonOkResponse($task);
             }
 
+            // INVALID_FORM_EXCEPTION si le formulaire est invalide
             throw new InvalidFormException(
                 'INVALID_FORM',
                 0,
@@ -147,15 +157,15 @@ class TaskController extends AbstractController
      * ),
      * @OA\Response(
      *     response=500,
-     *     description="INTERNAL_ERROR_WHILE_DELETING_TASK",
+     *     description="Internal error while deleteting the task",
      * )
-      @OA\Response(
+     * @OA\Response(
      *     response=404,
-     *     description="TASK_NOT_FOUND",
+     *     description="Task was not found",
      * )
      * @OA\Parameter(
      *     name="id",
-     *     in="query",
+     *     in="path",
      *     required=true,
      *     description="task id to be deleted",
      * )
@@ -164,10 +174,12 @@ class TaskController extends AbstractController
      */
     public function delete(EntityManagerInterface $entityManager, Task $task = null)
     {
+        // Not found exception si la tâches n'existe pas
         if (null === $task) {
             throw new NotFoundHttpException('TASK_NOT_FOUND');
         }
         try {
+            //Suppression de la tache
             $entityManager->remove($task);
             $entityManager->flush();
         } catch (ApiException $e) {
